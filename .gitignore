@@ -44,3 +44,6 @@ hs_err_pid*
 
 # Custom domain settings
 CNAME
+src/main/resources/saml/NRTest.cer
+src/main/resources/saml/Test2.cer
+src/main/resources/saml/samlKeystore.jks

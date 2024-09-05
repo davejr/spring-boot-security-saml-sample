@@ -54,6 +54,8 @@ import org.springframework.security.saml.SAMLLogoutProcessingFilter;
 import org.springframework.security.saml.SAMLProcessingFilter;
 import org.springframework.security.saml.SAMLWebSSOHoKProcessingFilter;
 import org.springframework.security.saml.context.SAMLContextProviderImpl;
+import org.springframework.security.saml.context.SAMLContextProviderLB;
+import org.springframework.security.saml.storage.EmptyStorageFactory;
 import org.springframework.security.saml.key.JKSKeyManager;
 import org.springframework.security.saml.key.KeyManager;
 import org.springframework.security.saml.log.SAMLDefaultLogger;
@@ -155,8 +157,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
  
     // Provider of default SAML Context
     @Bean
-    public SAMLContextProviderImpl contextProvider() {
-        return new SAMLContextProviderImpl();
+    public SAMLContextProviderLB contextProvider() {
+        SAMLContextProviderLB samlContextProviderLB = new SAMLContextProviderLB();
+        samlContextProviderLB.setScheme("http");
+        samlContextProviderLB.setServerName("localhost");
+        samlContextProviderLB.setServerPort(8080);
+        samlContextProviderLB.setContextPath("");
+        samlContextProviderLB.setStorageFactory(new EmptyStorageFactory());
+        return samlContextProviderLB;
+        //return new SAMLContextProviderLB();
     }
  
     // Initialization of OpenSAML library
@@ -174,7 +183,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
     // SAML 2.0 WebSSO Assertion Consumer
     @Bean
     public WebSSOProfileConsumer webSSOprofileConsumer() {
-        return new WebSSOProfileConsumerImpl();
+        WebSSOProfileConsumerImpl profile = new WebSSOProfileConsumerImpl();
+        profile.setMaxAuthenticationAge(40000000);
+        return profile;
     }
  
     // SAML 2.0 Holder-of-Key WebSSO Assertion Consumer
@@ -258,7 +269,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
 	@Qualifier("idp-ssocircle")
 	public ExtendedMetadataDelegate ssoCircleExtendedMetadataProvider()
 			throws MetadataProviderException {
-		String idpSSOCircleMetadataURL = "https://idp.ssocircle.com/meta-idp.xml";
+		String idpSSOCircleMetadataURL = "https://login.microsoftonline.com/0805d258-7c6f-4128-a49c-39345ca68191/federationmetadata/2007-06/federationmetadata.xml?appid=8a7ab026-7f67-4ad7-98fb-290e7587485c";
 		HTTPMetadataProvider httpMetadataProvider = new HTTPMetadataProvider(
 				this.backgroundTaskTimer, httpClient(), idpSSOCircleMetadataURL);
 		httpMetadataProvider.setParserPool(parserPool());
@@ -286,6 +297,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
     public MetadataGenerator metadataGenerator() {
         MetadataGenerator metadataGenerator = new MetadataGenerator();
         metadataGenerator.setEntityId("com:vdenotaris:spring:sp");
+        metadataGenerator.setEntityBaseURL("http://localhost");
         metadataGenerator.setExtendedMetadata(extendedMetadata());
         metadataGenerator.setIncludeDiscoveryExtension(false);
         metadataGenerator.setKeyManager(keyManager()); 
